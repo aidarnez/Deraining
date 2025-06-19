@@ -174,25 +174,19 @@ def Pre_train(opt):
             #SSIM Loss
             ssim_loss = -criterion_ssim(true_target, fake_target)
             
-            #perceptual_loss
-            #perceptual_loss = criterionPL(fake_target, true_target)
-            
             #SA_perceptual_loss
             SA_perceptual_loss = criterionSPL(fake_target, true_target)
-            #SA_perceptual_loss = 0
             
             # Overall Loss and optimize
-            generator_loss = Pixellevel_L1_Loss + 0.2*ssim_loss + 0.8*SA_perceptual_loss
-            #loss = Pixellevel_L1_Loss + 0.2*ssim_loss
-            #loss = Pixellevel_L1_Loss
+            generator_loss = Pixellevel_L1_Loss + 0.2*ssim_loss + 0.8*SA_perceptual_loss + 0.5*gan_loss
             
             optimizer_G.zero_grad()
             generator_loss.backward()
             optimizer_G.step()
             
-            #optimizer_D.zero_grad()
-            #discriminator_loss.backward(retain_graph=True)
-            #optimizer_D.step()
+            optimizer_D.zero_grad()
+            discriminator_loss.backward(retain_graph=True)
+            optimizer_D.step()
 
             # Determine approximate time left
             iters_done = epoch * len(train_loader) + i
