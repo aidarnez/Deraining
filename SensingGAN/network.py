@@ -230,7 +230,53 @@ class Up(nn.Module):
         cont_xy = torch.cat([x, deconv_y], dim=1)
         dconvxy = self.dconv(cont_xy)
         return dconvxy
+# ----------------------------------------
+#      Дискриминатор
+# ----------------------------------------
+class Discriminator(nn.Module):
+    def __init__(self, batch_size=8, conv_dim=64):
+        super(Discriminator, self).__init__()
+        layer1 = []
+        layer2 = []
+        layer3 = []
+        layer4 = []
 
+        layer1.append(nn.BatchNorm2d(nn.Conv2d(3, conv_dim, 4, 2, 1)))  #256=>128, C64
+        layer1.append(nn.LeakyReLU(0.1))
+        curr_dim = conv_dim
+
+        layer2.append(nn.BatchNorm2d(nn.Conv2d(curr_dim, curr_dim*2, 4, 2, 1)))  #128=>64, C128
+        layer2.append(nn.LeakyReLU(0.1))
+        curr_dim = curr_dim * 2
+
+        layer3.append(nn.BatchNorm2d(nn.Conv2d(curr_dim, curr_dim*2, 4, 2, 1)))  #64=>32, C256
+        layer3.append(nn.LeakyReLU(0.1))
+        curr_dim = curr_dim * 2
+
+        layer4.append(nn.BatchNorm2d(nn.Conv2d(curr_dim, curr_dim*2, 4, 2, 1)))  #32=>16, C512
+        layer4.append(nn.LeakyReLU(0.1))
+
+        self.l1 = nn.Sequential(*layer1)
+        self.l2 = nn.Sequential(*layer2)
+        self.l3 = nn.Sequential(*layer3)
+        self.attn = Self_Attn(512, 'relu')
+        self.l4 = nn.Sequential(*layer4)
+
+        self.fc = nn.Sequential(
+            nn.Linear(16 * 16 * 16, 1024),
+            nn.Linear(1024, 1),
+            nn.Sigmoid()
+            )
+        
+    def forward(self, x):
+        out = self.l1(x)
+        out = self.l2(out)
+        out = self.l3(out)
+        out = self.attn(out)
+        out = self.l4(out)
+        out = out.view(out.size(0),-1)
+        return self.fc(out)
+        
 # ----------------------------------------
 #      Self-attention (SAGAN ver.)
 # ----------------------------------------
